@@ -11,6 +11,13 @@
 
 #include "config.h"
 
+void notication_send(const char *title, const char *dev, const char *dir) {
+   char buf[100];
+   sprintf(buf, "notify-send \"%s\" \"%s at %s\"", title, dev, dir);
+   printf("%s\n", buf);
+   // system(buf);
+}
+
 void get_mount_path(char *buf) {
    uuid_t bin_uuid;
    uuid_generate_random(bin_uuid);
@@ -22,13 +29,18 @@ void get_mount_path(char *buf) {
 
 int new_mount_dir(char *buf) {
    get_mount_path(buf);
-
    return mkdir(buf, MOUNT_POINT_PERMISSIONS);
 }
 
-int mount_drive(const char *dev, char *path_buf) {
+int mount_drive(const char *dev) {
+   char dev_buf[50];
+   sprintf(dev_buf, "%s%s", DEV_DIR, dev);
+
+   char path_buf[50];
    int mkdir_result = new_mount_dir(path_buf);
-   int mount_result = mount(dev, path_buf, NULL, MS_BIND, NULL);
+
+   notication_send("Mounting", dev_buf, path_buf);
+   int mount_result = mount(dev_buf, path_buf, NULL, MS_BIND, NULL);
 
    return mkdir_result | mount_result;
 }
@@ -65,6 +77,7 @@ int main() {
 
          if(event->mask & IN_CREATE) {
             printf("CREATE %s\n", event->name);
+            mount_drive(event->name);
          } else if(event->mask & IN_DELETE) {
             printf("DELETE %s\n", event->name);
          }
@@ -72,8 +85,6 @@ int main() {
          i += sizeof(struct inotify_event) + event->len;
       }
    }
-
-   system("notify-send AAAAAAAAA A");
 
    return EXIT_SUCCESS;
 }
