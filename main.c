@@ -5,7 +5,7 @@
 #include <sys/mount.h>
 #include <sys/stat.h>
 #include <sys/types.h>
-#include <bits/posix1_lim.h>
+#include <sys/inotify.h>
 #include <uuid/uuid.h>
 
 #include "config.h"
@@ -39,10 +39,23 @@ int unmount_drive(const char *dir) {
 }
 
 int main() {
-   char b[50];
-   new_mount_dir(b);
-   getchar();
-   rmdir(b);
+   int fd = inotify_init();
+   if(fd == -1)
+      perror("inotify_init");
+
+   int wd = inotify_add_watch(fd, DEV_DIR, IN_CREATE);
+   if(wd == -1)
+      perror("inotify_add_watch");
+
+   char buf[100];
+   while(1) {
+      read(fd, buf, 100);
+      struct inotify_event *event;
+      event = (struct inotify_event *)buf;
+      printf("%s\n", event->name);
+   }
+
+   system("notify-send AAAAAAAAA A");
 
    return EXIT_SUCCESS;
 }
