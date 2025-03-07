@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <stdint.h>
 #include <unistd.h>
 #include <dirent.h>
 #include <sys/mount.h>
@@ -40,19 +41,36 @@ int unmount_drive(const char *dir) {
 
 int main() {
    int fd = inotify_init();
-   if(fd == -1)
+   if(fd == -1) {
       perror("inotify_init");
+      exit(EXIT_FAILURE);
+   }
 
-   int wd = inotify_add_watch(fd, DEV_DIR, IN_CREATE);
-   if(wd == -1)
+   int wd = inotify_add_watch(fd, DEV_DIR, IN_CREATE | IN_DELETE);
+   if(wd == -1) {
       perror("inotify_add_watch");
+      exit(EXIT_FAILURE);
+   }
 
-   char buf[100];
+   uint8_t buf[1024];
    while(1) {
-      read(fd, buf, 100);
-      struct inotify_event *event;
-      event = (struct inotify_event *)buf;
-      printf("%s\n", event->name);
+      int read_result = read(fd, buf, sizeof(buf));
+      if(read_result == -1) {
+         perror("read");
+         continue;
+      }
+
+      for(int i = 0; i < read_result;) {
+         struct inotify_event *event = (struct inotify_event *)&buf[i];
+
+         if(event->mask & IN_CREATE) {
+            printf("CREATE %s\n", event->name);
+         } else if(event->mask & IN_DELETE) {
+            printf("DELETE %s\n", event->name);
+         }
+
+         i += sizeof(struct inotify_event) + event->len;
+      }
    }
 
    system("notify-send AAAAAAAAA A");
