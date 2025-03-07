@@ -1,9 +1,14 @@
 #include <stdlib.h>
 #include <sys/mount.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 
 #include "config.h"
 
-char *new_mount_dir() { return NULL; }
+char *new_mount_dir() {
+   int result = mkdir("/mnt/aaa/", MOUNT_POINT_PERMISSIONS);
+   return NULL;
+}
 
 int del_mount_dir(const char *dir) { return -1; }
 
@@ -18,4 +23,8 @@ int unmount_drive(const char *dir) {
    return result;
 }
 
-int main() { return EXIT_SUCCESS; }
+int main() {
+   new_mount_dir();
+
+   return EXIT_SUCCESS;
+}
