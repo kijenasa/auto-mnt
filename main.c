@@ -25,8 +25,6 @@ int new_mount_dir(char *buf) {
    return mkdir(buf, MOUNT_POINT_PERMISSIONS);
 }
 
-int del_mount_dir(const char *dir) { return rmdir(dir); }
-
 int mount_drive(const char *dev, char *path_buf) {
    int mkdir_result = new_mount_dir(path_buf);
    int mount_result = mount(dev, path_buf, NULL, MS_BIND, NULL);
@@ -36,7 +34,7 @@ int mount_drive(const char *dev, char *path_buf) {
 
 int unmount_drive(const char *dir) {
    int umount_result = umount(dir);
-   int del_result = del_mount_dir(dir);
+   int del_result = rmdir(dir);
    return umount_result | del_result;
 }
 
@@ -44,7 +42,7 @@ int main() {
    char b[50];
    new_mount_dir(b);
    getchar();
-   del_mount_dir(b);
+   rmdir(b);
 
    return EXIT_SUCCESS;
 }
